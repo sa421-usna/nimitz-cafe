@@ -1,0 +1,232 @@
+---
+title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
+author: "I. M. Wright"
+date: "SA421 Fall 2017"
+output:
+  html_document: default
+  html_notebook:
+    code_folding: none
+---
+
+# Problem statement
+
+The Nimitz Coffee Bar (NCB) cafe has a line where customers wait to place their order with the cashier. Once they have ordered, one or more baristas complete their order. Order completion is conducted on a first-in, first-out (FIFO) basis.
+
+In this report, we analyze the addition of baristas to improve NCB's customer service.
+NCB has provided us with data on the arrival times, cashier times, and service times.
+
+```{r setup, echo = FALSE, include = FALSE}
+library(readxl)
+library(fitdistrplus)
+library(dplyr)
+library(knitr)
+```
+
+# Input data analysis
+
+## Interarrival times
+
+```{r echo = FALSE}
+##### Read arrival time data and compute interarrival times #####
+# Read arrival times from Excel file
+arrival.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!A2:A88', col_names = 'arrival.times')
+
+# Get arrival times as a vector
+arrival.times <- arrival.data$arrival.times
+
+# Sort arrival times 
+arrival.times <- sort(arrival.times)
+
+# Compute interarrival times (seconds)
+interarrival.times <- as.numeric(diff(arrival.times))
+
+# Assume that simultaneous arrivals are in fact 1 second apart
+interarrival.times[interarrival.times == 0] <- 1
+```
+
+First, we consider the arrival data. To simplify matters, we assumed that any simultaneous arrivals are in fact one second apart.
+
+```{r echo = FALSE, include = FALSE}
+##### Inspect data #####
+plotdist(interarrival.times)
+```
+
+```{r echo = FALSE, include = FALSE}
+# Find maximum likelihood estimator for exponential, gamma, and lognormal distributions
+interarrival.fit.exp <- fitdist(interarrival.times, "exp")
+summary(interarrival.fit.exp)
+
+interarrival.fit.gamma <- fitdist(interarrival.times, "gamma")
+summary(interarrival.fit.gamma)
+
+interarrival.fit.lnorm <- fitdist(interarrival.times, "lnorm")
+summary(interarrival.fit.lnorm)
+```
+
+After inspecting the data visually, we determined that the interarrival times may be appropriately modeled by an exponential, gamma, or lognormal distribution.
+Using maximum likelihood estimation, the interarrival times best fit
+
+* an exponential distribution with rate `r interarrival.fit.exp$estimate[["rate"]]`, 
+* a gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`, and
+* a lognormal distribution with mean `r interarrival.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r interarrival.fit.lnorm$estimate[["sdlog"]]`.
+
+The histogram of the interarrival time data and the probability density functions of the fitted distributions are shown in the left figure below.
+In addition, the empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+
+```{r echo = FALSE}
+par(mfrow=c(1,2))
+denscomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
+         legendtext = c('exponential', 'gamma', 'lognormal'))
+cdfcomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
+         legendtext = c('exponential', 'gamma', 'lognormal'))
+```
+
+In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+
+```{r echo = FALSE}
+interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
+               fitnames = c('exponential', 'gamma', 'lognormal'))
+print(interarrival.gof)
+```
+
+For our simulation study, we chose to model the interarrival times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`.
+
+### Cashier times
+
+```{r, echo=FALSE}
+# Read service times from Excel file
+cashier.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!E2:E28', col_names = 'cashier.times')
+
+# Get service times as a vector in seconds
+cashier.times <- cashier.data$cashier.times
+```
+
+```{r echo = FALSE, include = FALSE}
+##### Inspect data #####
+plotdist(cashier.times)
+```
+
+Next, we consider the time each customer spends at the cashier.
+After inspecting the data visually, we determined that the cashier times may be appropriately modeled by a gamma or lognormal distribution.
+
+```{r echo = FALSE, include = FALSE}
+# Find maximum likelihood estimator for gamma and lognormal distributions
+cashier.fit.gamma <- fitdist(cashier.times, "gamma")
+summary(cashier.fit.gamma)
+
+cashier.fit.lnorm <- fitdist(cashier.times, "lnorm")
+summary(cashier.fit.lnorm)
+```
+
+Using maximum likelihood estimation, the interarrival times best fit
+
+* a gamma distribution with shape `r cashier.fit.gamma$estimate[["shape"]]` and rate `r cashier.fit.gamma$estimate[["rate"]]`, and
+* a lognormal distribution with mean `r cashier.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r cashier.fit.lnorm$estimate[["sdlog"]]`.
+
+The histogram of the cashier time data and the probability density functions of the fitted distributions are shown on the left figure below.
+In addition, the empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+
+```{r echo = FALSE}
+par(mfrow=c(1,2))
+denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+```
+
+In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+
+```{r echo = FALSE}
+cashier.gof <- gofstat(list(cashier.fit.gamma, cashier.fit.lnorm), 
+               fitnames = c('gamma', 'lognormal'))
+print(cashier.gof)
+```
+
+For our simulation study, we chose to model the cashier times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r cashier.fit.gamma$estimate[["shape"]]` and rate `r cashier.fit.gamma$estimate[["rate"]]`.
+
+### Service times
+
+```{r, echo=FALSE}
+# Read service times from Excel file
+service.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!C2:C39', col_names = 'service.times')
+
+# Get service times as a vector in seconds
+service.times <- service.data$service.times 
+```
+
+```{r echo = FALSE, include = FALSE}
+##### Inspect data #####
+plotdist(service.times)
+```
+
+Finally, we analyze the time it takes to serve each customer.
+After inspecting the data visually, we determined that the service times may be appropriately modeled by a gamma or lognormal distribution.
+
+```{r echo = FALSE, include = FALSE}
+# Find maximum likelihood estimator for gamma and lognormal distributions
+service.fit.gamma <- fitdist(service.times, "gamma")
+summary(service.fit.gamma)
+
+service.fit.lnorm <- fitdist(service.times, "lnorm")
+summary(service.fit.lnorm)
+```
+
+Using maximum likelihood estimation, the interarrival times best fit
+
+* a gamma distribution with shape `r service.fit.gamma$estimate[["shape"]]` and rate `r service.fit.gamma$estimate[["rate"]]`, and
+* a lognormal distribution with mean `r service.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r service.fit.lnorm$estimate[["sdlog"]]`.
+
+The histogram of the service time data and the probability density functions of the fitted distributions are shown on the left figure below.
+In addition, the empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+
+```{r echo = FALSE}
+par(mfrow=c(1,2))
+denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+```
+
+In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+
+```{r echo = FALSE}
+service.gof <- gofstat(list(service.fit.gamma, service.fit.lnorm), 
+               fitnames = c('gamma', 'lognormal'))
+print(service.gof)
+```
+
+For our simulation study, we chose to model the service times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r service.fit.gamma$estimate[["shape"]]` and rate `r service.fit.gamma$estimate[["rate"]]`.
+
+# Simulation model and scenarios
+
+We modeled the NCB in JaamSim. A graphical representation of the simulation model is shown below.
+
+![Simulation Flowchart](jaamsim-screenshot.png)
+
+We examined the impact on average delay when NCB has 1, 2, 3, and 4 baristas. 
+For each of these numbers of baristas, we ran our simulation 100 times. 
+
+# Simulation output analysis
+
+## Impact of number of baristas 
+
+```{r echo = FALSE, include = FALSE}
+# Run simulation for question 1
+system("java -jar '/Applications/jaamsim/JaamSim2017-09.jar' 'nimitz-cafe-simulation.cfg' -b")
+```
+
+```{r echo = FALSE, include = FALSE}
+# Read output from simulation
+output <- read.table("nimitz-cafe-simulation.dat",
+                     sep="\t", skip=2, 
+                     col.names=c('number.of.baristas', 'run', 'avg.delay'))
+```
+
+According to our simulation study, the average delay experienced by a customer is predicted to be close to 40 minutes (2400 seconds) with 1 barista, just over 18 seconds with 2 baristas, between 2-3 seconds with 3 baristas, and less than a second with 4 baristas. Similarly, the 95% confidence intervals suggests that the predicted average delay increases in reliability by an order of magnitude for each additional barista.
+
+```{r echo = FALSE }
+output %>%
+  group_by(number.of.baristas) %>%
+  summarise(mean.avg.delay = mean(avg.delay), ci.range = 2*1.96*sd(avg.delay)/sqrt(n())) %>%
+  kable(col.names = c('Number of baristas', 'Average delay', 'CI range'))
+```
+
+# Conclusion
+
+Based on the results presented, increasing the number of workers from 1 to 2 has the most significant impact, to reducing the predicted average delay from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of workers further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added workers. The reliability of these predictions are imply these estimates have a worst case variability of 12% of the predicted mean.
