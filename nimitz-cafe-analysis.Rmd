@@ -207,7 +207,7 @@ For each of these numbers of baristas, we ran our simulation 100 times.
 ## Impact of number of baristas 
 
 ```{r echo = FALSE, include = FALSE}
-# Run simulation for question 1
+# Run simulation
 system("java -jar '/Applications/jaamsim/JaamSim2017-09.jar' 'nimitz-cafe-simulation.cfg' -b")
 ```
 
