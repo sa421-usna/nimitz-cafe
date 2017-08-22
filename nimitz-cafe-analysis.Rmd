@@ -3,9 +3,9 @@ title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
 date: "SA421 Fall 2017"
 output:
-  html_document: default
   html_notebook:
     code_folding: none
+  html_document: default
 ---
 
 # Problem statement
@@ -13,6 +13,8 @@ output:
 The Nimitz Coffee Bar (NCB) cafe has a line where customers wait to place their order with the cashier. Once they have ordered, one or more baristas complete their order. Order completion is conducted on a first-in, first-out (FIFO) basis.
 
 In this report, we analyze the addition of baristas to improve NCB's customer service.
+In particular, we examine the effect of additional baristas on the average delay experienced
+by customers after placing their orders.
 NCB has provided us with data on the arrival times, cashier times, and service times.
 
 ```{r setup, echo = FALSE, include = FALSE}
@@ -71,7 +73,7 @@ Using maximum likelihood estimation, the interarrival times best fit
 * a lognormal distribution with mean `r interarrival.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r interarrival.fit.lnorm$estimate[["sdlog"]]`.
 
 The histogram of the interarrival time data and the probability density functions of the fitted distributions are shown in the left figure below.
-In addition, the empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
 par(mfrow=c(1,2))
@@ -81,7 +83,7 @@ cdfcomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnor
          legendtext = c('exponential', 'gamma', 'lognormal'))
 ```
 
-In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE}
 interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
@@ -89,7 +91,7 @@ interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, i
 print(interarrival.gof)
 ```
 
-For our simulation study, we chose to model the interarrival times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`.
+For our simulation study, we chose to model the interarrival times with the distribution with the lowest Bayesian Information Criterion (BIC): the gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`.
 
 ### Cashier times
 
@@ -124,7 +126,7 @@ Using maximum likelihood estimation, the interarrival times best fit
 * a lognormal distribution with mean `r cashier.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r cashier.fit.lnorm$estimate[["sdlog"]]`.
 
 The histogram of the cashier time data and the probability density functions of the fitted distributions are shown on the left figure below.
-In addition, the empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
 par(mfrow=c(1,2))
@@ -132,7 +134,7 @@ denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lo
 cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 ```
 
-In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE}
 cashier.gof <- gofstat(list(cashier.fit.gamma, cashier.fit.lnorm), 
@@ -157,7 +159,7 @@ service.times <- service.data$service.times
 plotdist(service.times)
 ```
 
-Finally, we analyze the time it takes to serve each customer.
+Finally, we analyze the time it takes the baristas to serve each customer.
 After inspecting the data visually, we determined that the service times may be appropriately modeled by a gamma or lognormal distribution.
 
 ```{r echo = FALSE, include = FALSE}
@@ -175,7 +177,7 @@ Using maximum likelihood estimation, the interarrival times best fit
 * a lognormal distribution with mean `r service.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r service.fit.lnorm$estimate[["sdlog"]]`.
 
 The histogram of the service time data and the probability density functions of the fitted distributions are shown on the left figure below.
-In addition, the empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
 par(mfrow=c(1,2))
@@ -183,7 +185,7 @@ denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lo
 cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 ```
 
-In addition, the goodness-of-fit statistics for these fitted distributions is given in the tables below:
+In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE}
 service.gof <- gofstat(list(service.fit.gamma, service.fit.lnorm), 
@@ -202,14 +204,14 @@ We modeled the NCB in JaamSim. A graphical representation of the simulation mode
 We examined the impact on average delay when NCB has 1, 2, 3, and 4 baristas. 
 For each of these numbers of baristas, we ran our simulation 100 times. 
 
-# Simulation output analysis
-
-## Impact of number of baristas 
-
 ```{r echo = FALSE, include = FALSE}
 # Run simulation
 system('java -jar "/Applications/jaamsim/JaamSim2017-09.jar" "nimitz-cafe-simulation.cfg" -b')
 ```
+
+# Simulation output analysis
+
+## Impact of number of baristas 
 
 ```{r echo = FALSE, include = FALSE}
 # Read output from simulation
@@ -218,7 +220,7 @@ output <- read.table("nimitz-cafe-simulation.dat",
                      col.names=c('number.of.baristas', 'run', 'avg.delay'))
 ```
 
-According to our simulation study, the average delay experienced by a customer is predicted to be close to 40 minutes (2400 seconds) with 1 barista, just over 18 seconds with 2 baristas, between 2-3 seconds with 3 baristas, and less than a second with 4 baristas. Similarly, the 95% confidence intervals suggests that the predicted average delay increases in reliability by an order of magnitude for each additional barista.
+According to our simulation, the average delay experienced by customers after placing their orders is predicted to be close to 40 minutes (2400 seconds) with 1 barista, just over 18 seconds with 2 baristas, between 2-3 seconds with 3 baristas, and less than a second with 4 baristas. Similarly, the 95% confidence intervals suggests that the predicted average delay increases in reliability by an order of magnitude for each additional barista.
 
 ```{r echo = FALSE }
 output %>%
@@ -229,4 +231,4 @@ output %>%
 
 # Conclusion
 
-Based on the results presented, increasing the number of workers from 1 to 2 has the most significant impact, to reducing the predicted average delay from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of workers further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added workers. The reliability of these predictions are imply these estimates have a worst case variability of 12% of the predicted mean.
+Based on the results presented, increasing the number of baristas from 1 to 2 has the most significant impact, reducing the predicted average delay experienced by customers after placing their orders from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of baristas further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added baristas. The reliability of these predictions are imply these estimates have a worst case variability of 12% of the predicted mean.
