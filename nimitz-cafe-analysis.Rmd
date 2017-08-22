@@ -3,9 +3,10 @@ title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
 date: "SA421 Fall 2017"
 output:
+  html_document: default
   html_notebook:
     code_folding: none
-  html_document: default
+  pdf_document: default
 ---
 
 # Problem statement
@@ -76,7 +77,7 @@ The histogram of the interarrival time data and the probability density function
 The empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2))
+par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
 denscomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
          legendtext = c('exponential', 'gamma', 'lognormal'))
 cdfcomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
@@ -129,7 +130,7 @@ The histogram of the cashier time data and the probability density functions of 
 The empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2))
+par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
 denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 ```
@@ -180,7 +181,7 @@ The histogram of the service time data and the probability density functions of 
 The empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2))
+par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
 denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
 ```
