@@ -3,10 +3,8 @@ title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
 date: "SA421 Fall 2017"
 output:
-  html_document: default
   html_notebook:
     code_folding: none
-  pdf_document: default
 ---
 
 # Problem statement
@@ -200,9 +198,9 @@ For our simulation study, we chose to model the service times with the distribut
 
 We modeled the NCB in JaamSim. A graphical representation of the simulation model is shown below.
 
-![Simulation Flowchart](jaamsim-screenshot.png)
+![](jaamsim-screenshot.png)
 
-We examined the impact on average delay when NCB has 1, 2, 3, and 4 baristas. 
+We examined the average delay experienced by customers after placing their orders when NCB has 1, 2, 3, and 4 baristas working. 
 For each of these numbers of baristas, we ran our simulation 100 times. 
 
 ```{r echo = FALSE, include = FALSE}
@@ -212,8 +210,6 @@ system('java -jar "/Applications/jaamsim/JaamSim2017-09.jar" "nimitz-cafe-simula
 
 # Simulation output analysis
 
-## Impact of number of baristas 
-
 ```{r echo = FALSE, include = FALSE}
 # Read output from simulation
 output <- read.table("nimitz-cafe-simulation.dat",
@@ -221,15 +217,15 @@ output <- read.table("nimitz-cafe-simulation.dat",
                      col.names=c('number.of.baristas', 'run', 'avg.delay'))
 ```
 
-According to our simulation, the average delay experienced by customers after placing their orders is predicted to be close to 40 minutes (2400 seconds) with 1 barista, just over 18 seconds with 2 baristas, between 2-3 seconds with 3 baristas, and less than a second with 4 baristas. Similarly, the 95% confidence intervals suggests that the predicted average delay increases in reliability by an order of magnitude for each additional barista.
+The table below shows our simulation's predictions of the mean average delay experienced by customers after placing their orders when there are 1, 2, 3, and 4 baristas in the cafe. The table also includes the corresponding 95% confidence interval lengths. As we see in the table, the predicted mean average delay decreases by at least an order of magnitude with each additional barista. Similarly, the lengths of the 95% confidence intervals suggest that the predicted mean average delay increases in reliability by an order of magnitude for each additional barista.
 
 ```{r echo = FALSE }
 output %>%
   group_by(number.of.baristas) %>%
   summarise(mean.avg.delay = mean(avg.delay), ci.range = 2*1.96*sd(avg.delay)/sqrt(n())) %>%
-  kable(col.names = c('Number of baristas', 'Average delay', 'CI range'))
+  kable(col.names = c('Number of baristas', 'Predicted mean average delay (seconds)', '95% CI length'))
 ```
 
 # Conclusion
 
-Based on the results presented, increasing the number of baristas from 1 to 2 has the most significant impact, reducing the predicted average delay experienced by customers after placing their orders from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of baristas further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added baristas. The reliability of these predictions are imply these estimates have a worst case variability of 12% of the predicted mean.
+Based on the results presented, increasing the number of baristas from 1 to 2 has the most significant impact, reducing the predicted average delay experienced by customers after placing their orders from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of baristas further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added baristas. The reliability of these predictions imply these estimates have a worst case variability of 12% of the predicted mean.
