@@ -2,9 +2,7 @@
 title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
 date: "SA421 Fall 2017"
-output:
-  html_notebook:
-    code_folding: none
+output: html_notebook
 ---
 
 # Problem statement
@@ -21,6 +19,8 @@ library(readxl)
 library(fitdistrplus)
 library(dplyr)
 library(knitr)
+library(ggplot2)
+library(gridExtra)
 ```
 
 # Input data analysis
@@ -64,22 +64,24 @@ interarrival.fit.lnorm <- fitdist(interarrival.times, "lnorm")
 summary(interarrival.fit.lnorm)
 ```
 
-After inspecting the data visually, we determined that the interarrival times may be appropriately modeled by an exponential, gamma, or lognormal distribution.
-Using maximum likelihood estimation, the interarrival times best fit
+After inspecting the data visually, we determined that the interarrival times may be appropriately modeled by an exponential, gamma, or lognormal distribution. Using maximum likelihood estimation, the interarrival times best fit
 
 * an exponential distribution with rate `r interarrival.fit.exp$estimate[["rate"]]`, 
 * a gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`, and
 * a lognormal distribution with mean `r interarrival.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r interarrival.fit.lnorm$estimate[["sdlog"]]`.
 
-The histogram of the interarrival time data and the probability density functions of the fitted distributions are shown in the left figure below.
-The empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The histogram of the interarrival time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
 denscomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
-         legendtext = c('exponential', 'gamma', 'lognormal'))
+         legendtext = c('exponential', 'gamma', 'lognormal'), plotstyle = 'ggplot')
+```
+
+The empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
+
+```{r echo = FALSE}
 cdfcomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
-         legendtext = c('exponential', 'gamma', 'lognormal'))
+         legendtext = c('exponential', 'gamma', 'lognormal'), plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
@@ -87,10 +89,15 @@ In addition, the goodness-of-fit statistics for these fitted distributions are g
 ```{r echo = FALSE}
 interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
                fitnames = c('exponential', 'gamma', 'lognormal'))
-print(interarrival.gof)
 ```
 
-For our simulation study, we chose to model the interarrival times with the distribution with the lowest Bayesian Information Criterion (BIC): the gamma distribution with shape `r interarrival.fit.gamma$estimate[["shape"]]` and rate `r interarrival.fit.gamma$estimate[["rate"]]`.
+|                              | Exponential                             | Gamma                             | Lognormal                             |
+| -----------------------------| --------------------------------------: | --------------------------------: |-------------------------------------: |
+| Kolmogorov-Smirnov statistic | `r interarrival.gof$ks['exponential']`  | `r interarrival.gof$ks['gamma']`  | `r interarrival.gof$ks['lognormal']`  |
+| AIC                          | `r interarrival.gof$aic['exponential']` | `r interarrival.gof$aic['gamma']` | `r interarrival.gof$aic['lognormal']` |
+| BIC                          | `r interarrival.gof$bic['exponential']` | `r interarrival.gof$bic['gamma']` | `r interarrival.gof$bic['lognormal']` |
+
+From the graphs above, we see that the exponential and gamma distributions appear to better fit the data than the lognormal distribution. Furthermore, as we see in the table above, among the three distributions, the gamma distribution has the best AIC, BIC, and K-S statistic.  So, for our simulation study, we chose to model the interarrival times with the gamma distribution with shape `r interarrival.fit.gamma$estimate['shape']` and rate `r interarrival.fit.gamma$estimate['rate']`.
 
 ### Cashier times
 
@@ -119,29 +126,37 @@ cashier.fit.lnorm <- fitdist(cashier.times, "lnorm")
 summary(cashier.fit.lnorm)
 ```
 
-Using maximum likelihood estimation, the interarrival times best fit
+Using maximum likelihood estimation, the cashier times best fit
 
-* a gamma distribution with shape `r cashier.fit.gamma$estimate[["shape"]]` and rate `r cashier.fit.gamma$estimate[["rate"]]`, and
-* a lognormal distribution with mean `r cashier.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r cashier.fit.lnorm$estimate[["sdlog"]]`.
+* a gamma distribution with shape `r cashier.fit.gamma$estimate['shape']` and rate `r cashier.fit.gamma$estimate['rate']`, and
+* a lognormal distribution with mean `r cashier.fit.lnorm$estimate['meanlog']` and standard deviation `r cashier.fit.lnorm$estimate['sdlog']`.
 
-The histogram of the cashier time data and the probability density functions of the fitted distributions are shown on the left figure below.
-The empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The histogram of the cashier time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
-denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
-cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+```
+
+The empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
+
+```{r echo = FALSE}
+cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
-```{r echo = FALSE}
+```{r echo = FALSE, include = FALSE}
 cashier.gof <- gofstat(list(cashier.fit.gamma, cashier.fit.lnorm), 
                fitnames = c('gamma', 'lognormal'))
-print(cashier.gof)
 ```
 
-For our simulation study, we chose to model the cashier times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r cashier.fit.gamma$estimate[["shape"]]` and rate `r cashier.fit.gamma$estimate[["rate"]]`.
+|                              | Gamma                        | Lognormal                        |
+| -----------------------------| ---------------------------: |--------------------------------: |
+| Kolmogorov-Smirnov statistic | `r cashier.gof$ks['gamma']`  | `r cashier.gof$ks['lognormal']`  |
+| AIC                          | `r cashier.gof$aic['gamma']` | `r cashier.gof$aic['lognormal']` |
+| BIC                          | `r cashier.gof$bic['gamma']` | `r cashier.gof$bic['lognormal']` |
+
+From the graphs above, we see that both the gamma and lognormal distributions appear to be reasonable choices. Furthermore, as we see in the table above, between the two distributions, the lognormal distribution has the better AIC, BIC, and K-S statistic.  So, for our simulation study, we chose to model the interarrival times with the lognormal distribution with mean `r cashier.fit.lnorm$estimate['meanlog']` and standard deviation `r cashier.fit.lnorm$estimate['sdlog']`.
 
 ### Service times
 
@@ -170,18 +185,21 @@ service.fit.lnorm <- fitdist(service.times, "lnorm")
 summary(service.fit.lnorm)
 ```
 
-Using maximum likelihood estimation, the interarrival times best fit
+Using maximum likelihood estimation, the service times best fit
 
 * a gamma distribution with shape `r service.fit.gamma$estimate[["shape"]]` and rate `r service.fit.gamma$estimate[["rate"]]`, and
 * a lognormal distribution with mean `r service.fit.lnorm$estimate[["meanlog"]]` and standard deviation `r service.fit.lnorm$estimate[["sdlog"]]`.
 
-The histogram of the service time data and the probability density functions of the fitted distributions are shown on the left figure below.
-The empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown on the right. 
+The histogram of the service time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-par(mfrow=c(1,2), mar=c(2,2,2,2), pty="s")
-denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
-cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'))
+denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+```
+
+The empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
+
+```{r echo = FALSE}
+cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
@@ -189,10 +207,15 @@ In addition, the goodness-of-fit statistics for these fitted distributions are g
 ```{r echo = FALSE}
 service.gof <- gofstat(list(service.fit.gamma, service.fit.lnorm), 
                fitnames = c('gamma', 'lognormal'))
-print(service.gof)
 ```
 
-For our simulation study, we chose to model the service times with the distribution with the lowest Bayesian Information Criterion: the gamma distribution with shape `r service.fit.gamma$estimate[["shape"]]` and rate `r service.fit.gamma$estimate[["rate"]]`.
+|                              | Gamma                        | Lognormal                        |
+| -----------------------------| ---------------------------: |--------------------------------: |
+| Kolmogorov-Smirnov statistic | `r service.gof$ks['gamma']`  | `r service.gof$ks['lognormal']`  |
+| AIC                          | `r service.gof$aic['gamma']` | `r service.gof$aic['lognormal']` |
+| BIC                          | `r service.gof$bic['gamma']` | `r service.gof$bic['lognormal']` |
+
+Again, from the graphs above, we see that both the gamma and lognormal distributions appear to be reasonable choices. Furthermore, as we see in the table above, between the two distributions, the gamma distribution has the better AIC, BIC, and K-S statistic.  So, for our simulation study, we chose to model the interarrival times with the gamma distribution with shape `r service.fit.gamma$estimate['shape']` and rate `r service.fit.gamma$estimate['rate']`.
 
 # Simulation model and scenarios
 
@@ -200,8 +223,7 @@ We modeled the NCB in JaamSim. A graphical representation of the simulation mode
 
 ![](jaamsim-screenshot.png)
 
-We examined the average delay experienced by customers after placing their orders when NCB has 1, 2, 3, and 4 baristas working. 
-For each of these numbers of baristas, we ran our simulation 100 times. 
+We examined the average delay experienced by customers after placing their orders when NCB has 1, 2, 3, and 4 baristas working.  For each of these numbers of baristas, we ran our simulation 100 times. 
 
 ```{r echo = FALSE, include = FALSE}
 # Run simulation
@@ -228,4 +250,4 @@ output %>%
 
 # Conclusion
 
-Based on the results presented, increasing the number of baristas from 1 to 2 has the most significant impact, reducing the predicted average delay experienced by customers after placing their orders from 40 minutes to less than half a minute, i.e., by a factor of roughly 80 times. Increasing the number of baristas further also decreases the predicted delay, although not as dramatically. The prediction reliability also increases significantly with added baristas. The reliability of these predictions imply these estimates have a worst case variability of 12% of the predicted mean.
+Based on the results presented, increasing the number of baristas from 1 to 2 has the most significant impact, reducing the predicted average delay experienced by customers after placing their orders from around 2 minutes to 10 seconds, i.e., by a factor of roughly 12 times. Increasing the number of baristas further also decreases the predicted delay, although perhaps not as dramatically. The prediction reliability also increases significantly with added baristas. The reliability of these predictions imply these estimates have a worst case variability of 27% of the predicted mean.
