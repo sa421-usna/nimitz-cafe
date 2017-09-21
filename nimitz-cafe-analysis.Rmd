@@ -1,7 +1,7 @@
 ---
 title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
-date: "SA421 Fall 2017"
+date: "SA421 Fall 2017 -- 21 September 2017"
 output: html_notebook
 ---
 
@@ -20,7 +20,6 @@ library(fitdistrplus)
 library(dplyr)
 library(knitr)
 library(ggplot2)
-library(gridExtra)
 ```
 
 # Input data analysis
@@ -28,39 +27,40 @@ library(gridExtra)
 ## Interarrival times
 
 ```{r echo = FALSE}
-##### Read arrival time data and compute interarrival times #####
 # Read arrival times from Excel file
-arrival.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!A2:A88', col_names = 'arrival.times')
-
-# Get arrival times as a vector
-arrival.times <- arrival.data$arrival.times
+arrival.data <- read_excel('cafe-data.xlsx', 
+                           range = 'Sheet1!A2:A88', 
+                           col_names = 'arrival.time')
 
 # Sort arrival times 
-arrival.times <- sort(arrival.times)
-
-# Compute interarrival times (seconds)
-interarrival.times <- as.numeric(diff(arrival.times))
-
+# Compute interarrival times in seconds, convert to numeric 
 # Assume that simultaneous arrivals are in fact 1 second apart
-interarrival.times[interarrival.times == 0] <- 1
+# Remove NA data
+arrival.data <- arrival.data %>%
+  arrange(arrival.time) %>%
+  mutate(interarrival.time = as.numeric(arrival.time - lag(arrival.time))) %>% 
+  mutate(interarrival.time = if_else(interarrival.time <= 0, 1, interarrival.time)) %>%
+  filter(!is.na(interarrival.time))
 ```
 
 First, we consider the arrival data. To simplify matters, we assumed that any simultaneous arrivals are in fact one second apart.
 
 ```{r echo = FALSE, include = FALSE}
-##### Inspect data #####
-plotdist(interarrival.times)
+# Inspect data 
+# This plot is just for investigative purposes, and will be hidden in the final report
+# To see this plot, set include to TRUE above and re-run this chunk
+plotdist(arrival.data$interarrival.time)
 ```
 
 ```{r echo = FALSE, include = FALSE}
 # Find maximum likelihood estimator for exponential, gamma, and lognormal distributions
-interarrival.fit.exp <- fitdist(interarrival.times, "exp")
+interarrival.fit.exp <- fitdist(arrival.data$interarrival.time, "exp")
 summary(interarrival.fit.exp)
 
-interarrival.fit.gamma <- fitdist(interarrival.times, "gamma")
+interarrival.fit.gamma <- fitdist(arrival.data$interarrival.time, "gamma")
 summary(interarrival.fit.gamma)
 
-interarrival.fit.lnorm <- fitdist(interarrival.times, "lnorm")
+interarrival.fit.lnorm <- fitdist(arrival.data$interarrival.time, "lnorm")
 summary(interarrival.fit.lnorm)
 ```
 
@@ -73,22 +73,33 @@ After inspecting the data visually, we determined that the interarrival times ma
 The histogram of the interarrival time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-denscomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
-         legendtext = c('exponential', 'gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot histogram and theoretical densities
+denscomp(list(interarrival.fit.exp, 
+              interarrival.fit.gamma, 
+              interarrival.fit.lnorm), 
+         legendtext = c('exponential', 'gamma', 'lognormal'), 
+         plotstyle = 'ggplot')
 ```
 
 The empirical cumulative distribution function of the interarrival time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
 
 ```{r echo = FALSE}
-cdfcomp(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
-         legendtext = c('exponential', 'gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot empirical and theoretical cdfs
+cdfcomp(list(interarrival.fit.exp, 
+             interarrival.fit.gamma, 
+             interarrival.fit.lnorm), 
+        legendtext = c('exponential', 'gamma', 'lognormal'), 
+        plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE}
-interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, interarrival.fit.lnorm), 
-               fitnames = c('exponential', 'gamma', 'lognormal'))
+# Compute goodness-of-fit statistics
+interarrival.gof <- gofstat(list(interarrival.fit.exp, 
+                                 interarrival.fit.gamma, 
+                                 interarrival.fit.lnorm), 
+                            fitnames = c('exponential', 'gamma', 'lognormal'))
 ```
 
 |                              | Exponential                             | Gamma                             | Lognormal                             |
@@ -97,21 +108,22 @@ interarrival.gof <- gofstat(list(interarrival.fit.exp, interarrival.fit.gamma, i
 | AIC                          | `r interarrival.gof$aic['exponential']` | `r interarrival.gof$aic['gamma']` | `r interarrival.gof$aic['lognormal']` |
 | BIC                          | `r interarrival.gof$bic['exponential']` | `r interarrival.gof$bic['gamma']` | `r interarrival.gof$bic['lognormal']` |
 
-From the graphs above, we see that the exponential and gamma distributions appear to better fit the data than the lognormal distribution. Furthermore, as we see in the table above, among the three distributions, the gamma distribution has the best AIC, BIC, and K-S statistic.  So, for our simulation study, we chose to model the interarrival times with the gamma distribution with shape `r interarrival.fit.gamma$estimate['shape']` and rate `r interarrival.fit.gamma$estimate['rate']`.
+From the graphs above, we see that the exponential and gamma distributions appear to better fit the interarrival time data than the lognormal distribution. Furthermore, as we see in the table above, among the three distributions, the gamma distribution has the best AIC, BIC, and K-S statistic.  So, for our simulation study, we chose to model the interarrival times with the gamma distribution with shape `r interarrival.fit.gamma$estimate['shape']` and rate `r interarrival.fit.gamma$estimate['rate']`.
 
 ### Cashier times
 
 ```{r, echo=FALSE}
 # Read service times from Excel file
-cashier.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!E2:E28', col_names = 'cashier.times')
-
-# Get service times as a vector in seconds
-cashier.times <- cashier.data$cashier.times
+cashier.data <- read_excel('cafe-data.xlsx', 
+                           range = 'Sheet1!E2:E28', 
+                           col_names = 'cashier.time')
 ```
 
 ```{r echo = FALSE, include = FALSE}
-##### Inspect data #####
-plotdist(cashier.times)
+# Inspect data 
+# This plot is just for investigative purposes, and will be hidden in the final report
+# To see this plot, set include to TRUE above and re-run this chunk
+plotdist(cashier.data$cashier.time)
 ```
 
 Next, we consider the time each customer spends at the cashier.
@@ -119,10 +131,10 @@ After inspecting the data visually, we determined that the cashier times may be 
 
 ```{r echo = FALSE, include = FALSE}
 # Find maximum likelihood estimator for gamma and lognormal distributions
-cashier.fit.gamma <- fitdist(cashier.times, "gamma")
+cashier.fit.gamma <- fitdist(cashier.data$cashier.time, "gamma")
 summary(cashier.fit.gamma)
 
-cashier.fit.lnorm <- fitdist(cashier.times, "lnorm")
+cashier.fit.lnorm <- fitdist(cashier.data$cashier.time, "lnorm")
 summary(cashier.fit.lnorm)
 ```
 
@@ -134,20 +146,27 @@ Using maximum likelihood estimation, the cashier times best fit
 The histogram of the cashier time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot histogram and theoretical densities
+denscomp(list(cashier.fit.gamma, cashier.fit.lnorm), 
+         legendtext = c('gamma', 'lognormal'), 
+         plotstyle = 'ggplot')
 ```
 
 The empirical cumulative distribution function of the cashier time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
 
 ```{r echo = FALSE}
-cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot empirical and theoretical cdfs
+cdfcomp(list(cashier.fit.gamma, cashier.fit.lnorm), 
+        legendtext = c('gamma', 'lognormal'), 
+        plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE, include = FALSE}
+# Compute goodness-of-fit statistics 
 cashier.gof <- gofstat(list(cashier.fit.gamma, cashier.fit.lnorm), 
-               fitnames = c('gamma', 'lognormal'))
+                       fitnames = c('gamma', 'lognormal'))
 ```
 
 |                              | Gamma                        | Lognormal                        |
@@ -162,15 +181,14 @@ From the graphs above, we see that both the gamma and lognormal distributions ap
 
 ```{r, echo=FALSE}
 # Read service times from Excel file
-service.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!C2:C39', col_names = 'service.times')
-
-# Get service times as a vector in seconds
-service.times <- service.data$service.times 
+service.data <- read_excel('cafe-data.xlsx', range = 'Sheet1!C2:C39', col_names = 'service.time')
 ```
 
 ```{r echo = FALSE, include = FALSE}
-##### Inspect data #####
-plotdist(service.times)
+# Inspect data 
+# This plot is just for investigative purposes, and will be hidden in the final report
+# To see this plot, set include to TRUE above and re-run this chunk
+plotdist(service.data$service.time)
 ```
 
 Finally, we analyze the time it takes the baristas to serve each customer.
@@ -178,10 +196,10 @@ After inspecting the data visually, we determined that the service times may be 
 
 ```{r echo = FALSE, include = FALSE}
 # Find maximum likelihood estimator for gamma and lognormal distributions
-service.fit.gamma <- fitdist(service.times, "gamma")
+service.fit.gamma <- fitdist(service.data$service.time, "gamma")
 summary(service.fit.gamma)
 
-service.fit.lnorm <- fitdist(service.times, "lnorm")
+service.fit.lnorm <- fitdist(service.data$service.time, "lnorm")
 summary(service.fit.lnorm)
 ```
 
@@ -193,20 +211,27 @@ Using maximum likelihood estimation, the service times best fit
 The histogram of the service time data and the probability density functions of the fitted distributions are shown below.
 
 ```{r echo = FALSE}
-denscomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot histogram and theoretical densities 
+denscomp(list(service.fit.gamma, service.fit.lnorm), 
+         legendtext = c('gamma', 'lognormal'), 
+         plotstyle = 'ggplot')
 ```
 
 The empirical cumulative distribution function of the service time data and the theoretical cumulative distribution functions of the fitted distributions are shown below. 
 
 ```{r echo = FALSE}
-cdfcomp(list(service.fit.gamma, service.fit.lnorm), legendtext = c('gamma', 'lognormal'), plotstyle = 'ggplot')
+# Plot empirical and theoretical cdfs
+cdfcomp(list(service.fit.gamma, service.fit.lnorm), 
+        legendtext = c('gamma', 'lognormal'), 
+        plotstyle = 'ggplot')
 ```
 
 In addition, the goodness-of-fit statistics for these fitted distributions are given in the tables below:
 
 ```{r echo = FALSE}
+# Compute goodness-of-fit statistics
 service.gof <- gofstat(list(service.fit.gamma, service.fit.lnorm), 
-               fitnames = c('gamma', 'lognormal'))
+                       fitnames = c('gamma', 'lognormal'))
 ```
 
 |                              | Gamma                        | Lognormal                        |
@@ -242,6 +267,7 @@ output <- read.table("nimitz-cafe-simulation.dat",
 The table below shows our simulation's predictions of the mean average delay experienced by customers after placing their orders when there are 1, 2, 3, and 4 baristas in the cafe. The table also includes the corresponding 95% confidence interval lengths. As we see in the table, the predicted mean average delay decreases by at least an order of magnitude with each additional barista. Similarly, the lengths of the 95% confidence intervals suggest that the predicted mean average delay increases in reliability by an order of magnitude for each additional barista.
 
 ```{r echo = FALSE }
+# Summarize output data
 output %>%
   group_by(number.of.baristas) %>%
   summarise(mean.avg.delay = mean(avg.delay), ci.range = 2*1.96*sd(avg.delay)/sqrt(n())) %>%
