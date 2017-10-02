@@ -1,23 +1,24 @@
 ---
 title: "Analyzing the Addition of Baristas at the Nimitz Coffee Bar"
 author: "I. M. Wright"
-date: "SA421 Fall 2017 -- 21 September 2017"
+date: "SA421 Fall 2017 -- 2 October 2017"
 output:
-  html_document: default
   html_notebook: default
+  html_document: default
 ---
 
 # Problem statement
 
-In this study, we use simulation to analyze the Nimitz Coffee Bar (NCB) cafe, a popular coffee shop located within Nimitz library. NCB has a line where customers wait to place their order with the cashier. Once they have ordered, either a barista complete their order or they self serve their order at a coffee dispenser. Once their order is completed, the customer might add condiments such as cream or sugar to their drink. sOrder completion is conducted on a first-in, first-out (FIFO) basis.
+In this study, we use simulation to analyze the Nimitz Coffee Bar (NCB) cafe, a popular coffee shop located within Nimitz library. NCB has a line where customers wait to place their order with the cashier. Once they have ordered, either a barista completes their order or they serve themselves at a coffee dispenser. Once their order is completed, the customer might add condiments such as cream or sugar to their drink. Order completion is conducted on a first-in, first-out (FIFO) basis.
 
-The manager at NCB is trying to decide how many baristas to work and specifically would like to know the impact that the number of baristas has on the customer experience.
-Therefore, we examine the effect of additional baristas on the average delay experienced
-by customers after placing their orders. In particular, we measure the simulated average delay customers experience at the barista queue with 1, 2, 3, and 4 baristas. By understanding the impact on the barista queue delay, we focus on the part of NCB directly affected by the number of baristas working. Because we focus on the barista queue, we do not model the self service coffee dispenser.
+The manager at NCB is trying to decide how many baristas to have working at any given time. Specifically, she would like to know the impact that the number of baristas has on the customer experience. Therefore, we examine the effect of additional baristas on the average delay experienced by customers after placing their orders. In particular, we measure the simulated average delay customers experience at the barista queue when NCB has 1, 2, 3, and 4 baristas working. In order to understand the impact on the delay at the barista queue, we focus on the part of NCB directly affected by the number of baristas working, and do not model the self-serve coffee dispenser.
 
 ```{r setup, echo = FALSE, include = FALSE}
-wdpath="/Users/david/Documents/Dropbox/teaching/sa421/sa421.f17/sa421-fall-2017/projects/nimitz-cafe/src"
-setwd(wdpath)
+# Set working directory if needed
+# wdpath="/Users/david/Documents/Dropbox/teaching/sa421/sa421.f17/sa421-fall-2017/projects/nimitz-cafe/src"
+# setwd(wdpath)
+
+# Load packages
 library(readxl)
 library(fitdistrplus)
 library(dplyr)
@@ -247,7 +248,7 @@ Again, from the graphs above, we see that both the gamma and lognormal distribut
 
 # Simulation model and scenarios
 
-We modeled the NCB in JaamSim. A graphical representation of the simulation model is shown below. We did not model the self-service coffee dispenser as our focus was delay at the barista queue.
+We modeled the NCB in JaamSim. A graphical representation of the simulation model is shown below. Recall that we did not model the self-serve coffee dispenser, as we focused on delay at the barista queue.
 
 ![](jaamsim-screenshot.png)
 
@@ -264,7 +265,7 @@ system('java -jar "/Applications/jaamsim/JaamSim2017-09.jar" "nimitz-cafe-simula
 # Read output from simulation
 output <- read.table("nimitz-cafe-simulation.dat",
                      sep="\t", skip=3, 
-                     col.names=c('number.of.baristas', 'run', 'avg.delay','avg.stime'))
+                     col.names=c('number.of.baristas', 'run', 'avg.delay'))
 ```
 
 The table below shows our simulation's predictions of the mean average delay experienced by customers after placing their orders when there are 1, 2, 3, and 4 baristas in the cafe. The table also includes the corresponding 95% confidence interval lengths. As we see in the table, the predicted mean average delay decreases by at least an order of magnitude with each additional barista. Similarly, the lengths of the 95% confidence intervals suggest that the predicted mean average delay increases in reliability by an order of magnitude for each additional barista.
@@ -279,12 +280,15 @@ output %>%
 
 # Conclusion
 
-Based on our simulation, we suggest that NCB has at least two baristas working. We suggest NCB consider further information and study to determine between 2, 3, or 4 baristas. Increasing the number of baristas from 1 to 2 had the largest effect, reducing the simulated average delay from just over 2 minutes to 10.4 seconds, i.e., by a factor of approximately 12 times. Increasing the number of baristas from 2 to 3 and 3 to 4 also decreases the predicted delay but by a smaller factor, from 10.4 seconds to just 1.8 to 0.3 seconds. The reliability of these predictions imply these estimates have a worst case variability of 27% of the predicted mean. 
+Based on our simulation, we suggest that NCB has at least two baristas working. We also suggest NCB consider further information and study to determine whether to have 2, 3, or 4 baristas working. Increasing the number of baristas from 1 to 2 had the largest effect, reducing the simulated average delay from just over 2 minutes to 10.4 seconds, i.e., by a factor of approximately 12. Increasing the number of baristas further also decreases the predicted delay but by a smaller factor: moving from 2 to 3 baristas or 3 to 4 baristas decreases the simulated average delay by a factor of about 6. The reliability of these predictions imply these estimates have a worst case variability of 27% of the predicted mean. 
 
-We suggest NCB pursue the following to determine between 2, 3, or 4 baristas:
+We suggest NCB pursue the following to determine whether to have 2, 3, or 4 baristas:
 
-  -Increase the number of simulation samples to improve the prediction reliability.
-  -Consider other performance measures based on further NCB objectives, e.g., sojourn time would provide more insight into the overall customer experience.
-  -Include the self service coffee line to the simulation model, especially if overall customer experience is analyzed.
-  -Consider a cost and revenue analysis of having 2, 3, or 4 baristas.
+- Increase the number of simulation samples to improve the prediction reliability.
+
+- Consider other performance measures based on NCB objectives, e.g., sojourn time would provide more insight into the overall customer experience.
+
+- Include the self-serve dispenser line to the simulation model, especially if overall customer experience is analyzed.
+
+- Consider a cost and revenue analysis of having 2, 3, or 4 baristas.
 
