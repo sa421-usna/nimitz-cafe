@@ -279,7 +279,7 @@ output %>%
 
 # Conclusion
 
-Based on our simulation, we suggest that NCB has at least two baristas working. We suggest NCB consider further information and study to determine between 2, 3, or 4 baristas. Increasing the number of baristas from 1 to 2 had the largest effect, reducing the simulated average delay from around 2 minutes to 10 seconds, i.e., by a factor of approximately 12 times. Increasing the number of baristas from 2 to 3 and 3 to 4 also decreases the predicted delay but by smaller amounts, from approximately 10 seconds to x seconds and from approximately x seconds to y seconds. The reliability of these predictions imply these estimates have a worst case variability of 27% of the predicted mean. 
+Based on our simulation, we suggest that NCB has at least two baristas working. We suggest NCB consider further information and study to determine between 2, 3, or 4 baristas. Increasing the number of baristas from 1 to 2 had the largest effect, reducing the simulated average delay from just over 2 minutes to 10.4 seconds, i.e., by a factor of approximately 12 times. Increasing the number of baristas from 2 to 3 and 3 to 4 also decreases the predicted delay but by a smaller factor, from 10.4 seconds to just 1.8 to 0.3 seconds. The reliability of these predictions imply these estimates have a worst case variability of 27% of the predicted mean. 
 
 We suggest NCB pursue the following to determine between 2, 3, or 4 baristas:
 
